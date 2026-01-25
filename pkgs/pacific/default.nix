@@ -10,13 +10,14 @@
   hdf5-mpi,
   zlib,
   xercesc,
-  makeWrapper
+  makeWrapper,
 }:
 
 stdenv.mkDerivation {
   pname = "pacific";
   version = "0.0.1";
 
+  # Build the current source tree (this repo checkout)
   src = fetchFromGitHub {
     owner = "tortotubus";
     repo = "PacIFiC";
@@ -31,38 +32,43 @@ stdenv.mkDerivation {
     gnumake
     pkg-config
     makeWrapper
-    (hdf5-mpi.override { mpi = openmpi; })
   ];
 
   buildInputs = [
     xercesc
     zlib
+    (hdf5-mpi.override { mpi = openmpi; })
+    openmpi
   ];
 
   propagatedBuildInputs = [
     xercesc
     zlib
     (hdf5-mpi.override { mpi = openmpi; })
+    openmpi
   ];
 
   cmakeFlags = [
+    # "-DCMAKE_C_COMPILER=${openmpi}/bin/mpicc"
+    # "-DCMAKE_CXX_COMPILER=${openmpi}/bin/mpicxx"
     "-DCMAKE_BUILD_TYPE=Release"
     "-DUSE_SUBMODULES=ON"
     "-DOCTREE_BASILISK_PROVIDER=VENDORED"
   ];
 
-  postFixup = ''
-    for p in $out/bin/*; do
-      [ -x "$p" ] || continue
-      wrapProgram "$p" --prefix PATH : ${lib.makeBinPath [ openmpi ]}
-    done
-  '';
+  # Optional: ensure mpirun is available when running the installed executables
+  # postFixup = ''
+  #   for p in $out/bin/*; do
+  #     [ -x "$p" ] || continue
+  #     wrapProgram "$p" --prefix PATH : ${lib.makeBinPath [ openmpi ]}
+  #   done
+  # '';
 
   meta = with lib; {
     description = "PacIFiC multiphysics toolkit";
     homepage = "https://github.com/tortotubus/PacIFiC";
     platforms = platforms.linux;
-    license = licenses.mit; # set appropriately
-    # mainProgram = "pacific"; # if there is a primary executable
+    license = licenses.mit;
+    mainProgram = "grains";
   };
 }
